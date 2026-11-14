@@ -3,11 +3,12 @@
 import { esFechaISO } from "./fechas";
 import { MONEDAS, TIPOS, type Empresa, type EtiquetaImpuesto, type Movimiento } from "./tipos";
 
+/** Reconoce solo etiquetas fiscales admitidas; lo demás queda como concepto libre. */
 export function detectarEtiquetaImpuesto(concepto: string): EtiquetaImpuesto | null {
-  const s = concepto.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z]/g, "");
-  if (/^iva/.test(s) || s === "impuestoalvaloragregado") return "IVA";
-  if (/^(ganancias|impuestodeganancias)/.test(s)) return "Imp. Ganancias";
-  if (/^(impuestoalcheque|cheque|debitosycreditos)/.test(s)) return "Impuesto al Cheque";
+  const s = concepto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
+  if (s.startsWith("iva") || s === "impuestoalvaloragregado") return "IVA";
+  if (s.startsWith("ganancias") || s.startsWith("impuestodeganancias")) return "Imp. Ganancias";
+  if (s.startsWith("impuestoalcheque") || s.startsWith("cheque") || s.startsWith("debitosycreditos")) return "Impuesto al Cheque";
   return null;
 }
 
@@ -32,8 +33,16 @@ export function validarMovimiento(entrada: Record<string, unknown>): Validado<Mo
   const moneda = String(entrada.moneda ?? "");
   const fecha = String(entrada.fecha ?? "");
   const id = String(entrada.id ?? "");
+  const tieneEtiquetaExplicita = Object.prototype.hasOwnProperty.call(entrada, "impuestoEtiqueta");
   const impuestoCrudo = String(entrada.impuestoEtiqueta ?? "").trim();
-  const impuestoEtiqueta = tipo === "impuesto" ? (["IVA", "Imp. Ganancias", "Impuesto al Cheque"].includes(impuestoCrudo) ? impuestoCrudo as EtiquetaImpuesto : detectarEtiquetaImpuesto(concepto)) : null;
+  const etiquetasValidas: EtiquetaImpuesto[] = ["IVA", "Imp. Ganancias", "Impuesto al Cheque"];
+  // Si el formulario envía el campo vacío, el usuario eligió "Otro": no inferimos una etiqueta.
+  // Solo inferimos por concepto cuando llega un registro antiguo o una importación sin ese campo.
+  const impuestoEtiqueta: EtiquetaImpuesto | null = tipo !== "impuesto"
+    ? null
+    : tieneEtiquetaExplicita
+      ? (etiquetasValidas.includes(impuestoCrudo as EtiquetaImpuesto) ? impuestoCrudo as EtiquetaImpuesto : null)
+      : detectarEtiquetaImpuesto(concepto);
   const puntualidadCruda = entrada.puntualidad;
   const sinPuntualidad = puntualidadCruda === null || puntualidadCruda === undefined || puntualidadCruda === "";
   const puntualidad = sinPuntualidad ? null : aNumero(puntualidadCruda);
@@ -59,6 +68,7 @@ export function validarMovimiento(entrada: Record<string, unknown>): Validado<Mo
       id,
       tipo: tipo as Movimiento["tipo"],
       concepto,
+      impuestoEtiqueta,
       monto,
       moneda: moneda as Movimiento["moneda"],
       fecha,
