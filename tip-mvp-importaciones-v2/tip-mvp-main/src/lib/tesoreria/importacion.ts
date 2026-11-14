@@ -2,7 +2,7 @@
 
 import { esFechaISO, sumarDias } from "./fechas";
 import type { Movimiento } from "./tipos";
-import { validarMovimiento } from "./validacion";
+import { detectarEtiquetaImpuesto, validarMovimiento } from "./validacion";
 
 export type MovimientoNuevo = Omit<Movimiento, "id">;
 export interface ErrorFila {
@@ -141,7 +141,7 @@ export function validarFilas(filas: unknown[][]): ResultadoImportacion {
       if (!v.ok) problemas.push(...Object.values(v.errores).map((e) => String(e).replace(/\.$/, "").toLowerCase()));
       else {
         const { tipo, concepto, monto, moneda, fecha, puntualidad } = v.valor;
-        movimientos.push({ tipo, concepto, monto, moneda, fecha, puntualidad });
+        movimientos.push({ tipo, concepto, impuestoEtiqueta: tipo === "impuesto" ? detectarEtiquetaImpuesto(concepto) : null, monto, moneda, fecha, puntualidad });
       }
     }
     if (problemas.length) {
