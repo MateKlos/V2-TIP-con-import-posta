@@ -1,6 +1,5 @@
 import "server-only";
 import type { DatosTesoreria, Movimiento } from "@/lib/tesoreria/tipos";
-import { detectarEtiquetaImpuesto } from "@/lib/tesoreria/validacion";
 import { crearClienteServidor } from "./server";
 
 export async function usuarioActual() {
@@ -31,7 +30,7 @@ export async function leerDatos(): Promise<DatosTesoreria | null> {
     movimientos: (movs ?? []).map((m) => ({
       ...m,
       // Compatibilidad: si la fila vieja no tenía etiqueta, inferirla por el concepto.
-      impuestoEtiqueta: m.impuesto_etiqueta ?? (m.tipo === "impuesto" ? detectarEtiquetaImpuesto(m.concepto) : null),
+      impuestoEtiqueta: m.impuesto_etiqueta ?? null,
       monto: Number(m.monto),
     })) as Movimiento[],
   };
