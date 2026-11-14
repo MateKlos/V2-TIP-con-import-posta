@@ -46,7 +46,9 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
 type EventoImpositivo = Pick<Movimiento, "concepto" | "fecha" | "monto" | "moneda" | "impuestoEtiqueta">;
 type EventoMarcado = EventoImpositivo & { etiqueta: string; indice: number };
 
-/** Agrupa vencimientos reconocidos cuando todo el grupo cabe en una ventana de 12 días. */
+/** Agrupa obligaciones de etiquetas distintas cuya distancia total no supera 12 días.
+ * Si se repite la misma etiqueta (por ejemplo, otro IVA), empieza un grupo nuevo.
+ */
 function agruparImpuestos(hoy: string, impuestos: EventoImpositivo[], cantidadDias: number): EventoMarcado[][] {
   const eventos = impuestos.map((m) => ({ ...m, etiqueta: m.impuestoEtiqueta ?? "", indice: diasEntre(hoy, m.fecha) }))
     .filter((m) => m.etiqueta && m.indice >= 0 && m.indice < cantidadDias)
@@ -54,7 +56,9 @@ function agruparImpuestos(hoy: string, impuestos: EventoImpositivo[], cantidadDi
   const grupos: EventoMarcado[][] = [];
   for (const evento of eventos) {
     const grupo = grupos[grupos.length - 1];
-    if (!grupo || evento.indice - grupo[0].indice > 12) grupos.push([evento]);
+    const mismaEtiquetaEnGrupo = grupo?.some((anterior) => anterior.etiqueta === evento.etiqueta);
+    const excedeVentana = !!grupo && evento.indice - grupo[0].indice > 12;
+    if (!grupo || mismaEtiquetaEnGrupo || excedeVentana) grupos.push([evento]);
     else grupo.push(evento);
   }
   return grupos;
