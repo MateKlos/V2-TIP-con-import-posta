@@ -12,6 +12,16 @@ import { fechaCorta } from "@/lib/tesoreria/fechas";
 import { fmtMonto } from "@/lib/tesoreria/formato";
 import type { Movimiento } from "@/lib/tesoreria/tipos";
 
+function etiquetaMes(fecha: string): string {
+  const fechaUTC = new Date(`${fecha}T00:00:00Z`);
+  const texto = new Intl.DateTimeFormat("es-AR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(fechaUTC);
+  return texto.charAt(0).toLocaleUpperCase("es-AR") + texto.slice(1);
+}
+
 export function VistaDatos() {
   const { datos, hoy, guardarEmpresa, guardarMovimiento, borrarMovimiento } = useDatos();
   const [editando, setEditando] = useState<Movimiento | null>(null);
@@ -72,7 +82,7 @@ export function VistaDatos() {
           </p>
         ) : (
           <>
-            {/* Escritorio: tabla */}
+            {/* Escritorio: tabla con encabezado al comenzar cada mes */}
             <table className="hidden w-full border-collapse text-[13px] md:table">
               <thead>
                 <tr className="text-left text-apagado">
@@ -82,48 +92,70 @@ export function VistaDatos() {
                 </tr>
               </thead>
               <tbody>
-                {movimientos.map((m) => (
-                  <tr key={m.id} className="border-b border-linea" data-testid="fila-movimiento">
-                    <td className="px-1.5 py-1.5 whitespace-nowrap">
-                      {fechaCorta(m.fecha)}/{m.fecha.slice(2, 4)} {m.fecha < hoy && <span className="tag tag-ambar ml-1">vencido</span>}
-                    </td>
-                    <td className="px-1.5"><TagTipo tipo={m.tipo} /></td>
-                    <td className="px-1.5">{m.concepto}</td>
-                    <td className="px-1.5 text-right tabular-nums whitespace-nowrap">{fmtMonto(m.monto, m.moneda)}</td>
-                    <td className="px-1.5">{m.puntualidad !== null ? `${m.puntualidad}%` : "—"}</td>
-                    <td className="px-1.5 text-right whitespace-nowrap">
-                      <button className="btn btn-texto" onClick={() => setEditando(m)}>Editar</button>
-                      <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id} aria-label={`Borrar ${m.concepto}`}>
-                        Borrar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {movimientos.map((m, i) => {
+                  const nuevoMes = i === 0 || movimientos[i - 1].fecha.slice(0, 7) !== m.fecha.slice(0, 7);
+                  return (
+                    <React.Fragment key={m.id}>
+                      {nuevoMes && (
+                        <tr className="bg-fondo/70">
+                          <td colSpan={6} className="border-b border-linea px-1.5 pt-3 pb-1.5 text-xs font-bold tracking-wide text-violeta">
+                            {etiquetaMes(m.fecha)}
+                          </td>
+                        </tr>
+                      )}
+                      <tr className="border-b border-linea" data-testid="fila-movimiento">
+                        <td className="px-1.5 py-1.5 whitespace-nowrap">
+                          {fechaCorta(m.fecha)}/{m.fecha.slice(2, 4)} {m.fecha < hoy && <span className="tag tag-ambar ml-1">vencido</span>}
+                        </td>
+                        <td className="px-1.5"><TagTipo tipo={m.tipo} /></td>
+                        <td className="px-1.5">{m.concepto}</td>
+                        <td className="px-1.5 text-right tabular-nums whitespace-nowrap">{fmtMonto(m.monto, m.moneda)}</td>
+                        <td className="px-1.5">{m.puntualidad !== null ? `${m.puntualidad}%` : "—"}</td>
+                        <td className="px-1.5 text-right whitespace-nowrap">
+                          <button className="btn btn-texto" onClick={() => setEditando(m)}>Editar</button>
+                          <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id} aria-label={`Borrar ${m.concepto}`}>
+                            Borrar
+                          </button>
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
 
-            {/* Celular: tarjetas */}
+            {/* Celular: tarjetas con separador mensual */}
             <ul className="flex flex-col divide-y divide-linea md:hidden">
-              {movimientos.map((m) => (
-                <li key={m.id} className="py-2.5" data-testid="tarjeta-movimiento">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium break-words">{m.concepto}</div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-apagado">
-                        <TagTipo tipo={m.tipo} />
-                        <span>{fechaCorta(m.fecha)}/{m.fecha.slice(2, 4)}</span>
-                        {m.fecha < hoy && <span className="tag tag-ambar">vencido</span>}
-                        {m.puntualidad !== null && <span>· paga a tiempo {m.puntualidad}%</span>}
+              {movimientos.map((m, i) => {
+                const nuevoMes = i === 0 || movimientos[i - 1].fecha.slice(0, 7) !== m.fecha.slice(0, 7);
+                return (
+                  <React.Fragment key={m.id}>
+                    {nuevoMes && (
+                      <li className="border-b border-linea bg-fondo/70 pt-3 pb-1.5 text-xs font-bold tracking-wide text-violeta">
+                        {etiquetaMes(m.fecha)}
+                      </li>
+                    )}
+                    <li className="py-2.5" data-testid="tarjeta-movimiento">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium break-words">{m.concepto}</div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-apagado">
+                            <TagTipo tipo={m.tipo} />
+                            <span>{fechaCorta(m.fecha)}/{m.fecha.slice(2, 4)}</span>
+                            {m.fecha < hoy && <span className="tag tag-ambar">vencido</span>}
+                            {m.puntualidad !== null && <span>· paga a tiempo {m.puntualidad}%</span>}
+                          </div>
+                        </div>
+                        <span className="shrink-0 font-semibold tabular-nums">{fmtMonto(m.monto, m.moneda)}</span>
                       </div>
-                    </div>
-                    <span className="shrink-0 font-semibold tabular-nums">{fmtMonto(m.monto, m.moneda)}</span>
-                  </div>
-                  <div className="mt-1 flex justify-end gap-1">
-                    <button className="btn btn-texto" onClick={() => { setEditando(m); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Editar</button>
-                    <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id}>Borrar</button>
-                  </div>
-                </li>
-              ))}
+                      <div className="mt-1 flex justify-end gap-1">
+                        <button className="btn btn-texto" onClick={() => { setEditando(m); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Editar</button>
+                        <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id}>Borrar</button>
+                      </div>
+                    </li>
+                  </React.Fragment>
+                );
+              })}
             </ul>
           </>
         )}
