@@ -1,7 +1,15 @@
 // Validación compartida por los formularios (cliente) y las Server Actions (servidor).
 
 import { esFechaISO } from "./fechas";
-import { MONEDAS, TIPOS, type Empresa, type Movimiento } from "./tipos";
+import { MONEDAS, TIPOS, type Empresa, type EtiquetaImpuesto, type Movimiento } from "./tipos";
+
+export function detectarEtiquetaImpuesto(concepto: string): EtiquetaImpuesto | null {
+  const s = concepto.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z]/g, "");
+  if (/^iva/.test(s) || s === "impuestoalvaloragregado") return "IVA";
+  if (/^(ganancias|impuestodeganancias)/.test(s)) return "Imp. Ganancias";
+  if (/^(impuestoalcheque|cheque|debitosycreditos)/.test(s)) return "Impuesto al Cheque";
+  return null;
+}
 
 export type Errores<T> = Partial<Record<keyof T, string>>;
 export type Validado<T> = { ok: true; valor: T } | { ok: false; errores: Errores<T> };
@@ -24,6 +32,8 @@ export function validarMovimiento(entrada: Record<string, unknown>): Validado<Mo
   const moneda = String(entrada.moneda ?? "");
   const fecha = String(entrada.fecha ?? "");
   const id = String(entrada.id ?? "");
+  const impuestoCrudo = String(entrada.impuestoEtiqueta ?? "").trim();
+  const impuestoEtiqueta = tipo === "impuesto" ? (["IVA", "Imp. Ganancias", "Impuesto al Cheque"].includes(impuestoCrudo) ? impuestoCrudo as EtiquetaImpuesto : detectarEtiquetaImpuesto(concepto)) : null;
   const puntualidadCruda = entrada.puntualidad;
   const sinPuntualidad = puntualidadCruda === null || puntualidadCruda === undefined || puntualidadCruda === "";
   const puntualidad = sinPuntualidad ? null : aNumero(puntualidadCruda);
