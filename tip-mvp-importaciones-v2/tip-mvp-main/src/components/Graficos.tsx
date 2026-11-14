@@ -77,8 +77,8 @@ function capaImpuestos(grupos: EventoMarcado[][]): Plugin<"line"> {
       ctx.fillStyle = "rgba(181, 126, 36, 0.075)";
       for (const grupo of grupos) {
         if (grupo.length < 2) continue;
-        const desde = x.getPixelForValue(grupo[0].indice);
-        const hasta = x.getPixelForValue(grupo[grupo.length - 1].indice);
+        const desde = Math.max(chart.chartArea.left, x.getPixelForValue(grupo[0].indice - 0.5));
+        const hasta = Math.min(chart.chartArea.right, x.getPixelForValue(grupo[grupo.length - 1].indice + 0.5));
         ctx.fillRect(desde, top, Math.max(0, hasta - desde), bottom - top);
       }
       ctx.strokeStyle = "rgba(169, 112, 24, 0.85)";
