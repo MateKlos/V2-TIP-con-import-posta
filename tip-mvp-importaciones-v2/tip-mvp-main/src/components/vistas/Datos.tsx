@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { BotonEjemplo } from "@/components/BotonEjemplo";
 import { Cargando } from "@/components/Cargando";
 import { useDatos } from "@/components/DatosProvider";
@@ -95,7 +95,7 @@ export function VistaDatos() {
                 {movimientos.map((m, i) => {
                   const nuevoMes = i === 0 || movimientos[i - 1].fecha.slice(0, 7) !== m.fecha.slice(0, 7);
                   return (
-                    <React.Fragment key={m.id}>
+                    <Fragment key={m.id}>
                       {nuevoMes && (
                         <tr className="bg-fondo/70">
                           <td colSpan={6} className="border-b border-linea px-1.5 pt-3 pb-1.5 text-xs font-bold tracking-wide text-violeta">
@@ -118,7 +118,7 @@ export function VistaDatos() {
                           </button>
                         </td>
                       </tr>
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -129,7 +129,7 @@ export function VistaDatos() {
               {movimientos.map((m, i) => {
                 const nuevoMes = i === 0 || movimientos[i - 1].fecha.slice(0, 7) !== m.fecha.slice(0, 7);
                 return (
-                  <React.Fragment key={m.id}>
+                  <Fragment key={m.id}>
                     {nuevoMes && (
                       <li className="border-b border-linea bg-fondo/70 pt-3 pb-1.5 text-xs font-bold tracking-wide text-violeta">
                         {etiquetaMes(m.fecha)}
@@ -153,7 +153,7 @@ export function VistaDatos() {
                         <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id}>Borrar</button>
                       </div>
                     </li>
-                  </React.Fragment>
+                  </Fragment>
                 );
               })}
             </ul>
