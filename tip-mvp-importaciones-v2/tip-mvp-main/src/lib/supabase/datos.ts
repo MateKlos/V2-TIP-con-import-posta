@@ -29,7 +29,7 @@ export async function leerDatos(): Promise<DatosTesoreria | null> {
     },
     movimientos: (movs ?? []).map((m) => ({
       ...m,
-      // Compatibilidad: si la fila vieja no tenía etiqueta, inferirla por el concepto.
+      // La migración 0002 ya clasificó los registros antiguos; NULL identifica impuestos personalizados.
       impuestoEtiqueta: m.impuesto_etiqueta ?? null,
       monto: Number(m.monto),
     })) as Movimiento[],
