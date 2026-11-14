@@ -6,9 +6,9 @@ alter table public.movimientos
 -- Migrar conceptos antiguos conocidos una sola vez; los nuevos "Otros" quedan NULL.
 update public.movimientos
 set impuesto_etiqueta = case
-  when lower(unaccent(concepto)) like 'iva%' or lower(unaccent(concepto)) = 'impuesto al valor agregado' then 'IVA'
-  when lower(unaccent(concepto)) like 'ganancias%' or lower(unaccent(concepto)) like 'impuesto de ganancias%' then 'Imp. Ganancias'
-  when lower(unaccent(concepto)) like 'impuesto al cheque%' or lower(unaccent(concepto)) like 'cheque%' or lower(unaccent(concepto)) like 'débitos y créditos%' or lower(unaccent(concepto)) like 'debitos y creditos%' then 'Impuesto al Cheque'
+  when lower(concepto) like 'iva%' or lower(concepto) = 'impuesto al valor agregado' then 'IVA'
+  when lower(concepto) like 'ganancias%' or lower(concepto) like 'impuesto de ganancias%' then 'Imp. Ganancias'
+  when lower(concepto) like 'impuesto al cheque%' or lower(concepto) like 'cheque%' or (lower(concepto) like 'débitos y créditos%' or lower(concepto) like 'debitos y creditos%') then 'Impuesto al Cheque'
   else null
 end
 where tipo = 'impuesto' and impuesto_etiqueta is null;
