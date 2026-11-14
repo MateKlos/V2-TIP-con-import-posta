@@ -17,13 +17,15 @@ const vacio = (hoy: string): Valores => ({
   monto: "",
   moneda: "ARS",
   fecha: sumarDias(hoy, 7),
-  puntualidad: "",\n  impuestoEtiqueta: "",
+  puntualidad: "",
+  impuestoEtiqueta: "",
 });
 
 const aTexto = (m: Movimiento): Valores => ({
   ...m,
   monto: String(m.monto),
-  puntualidad: m.puntualidad === null ? "" : String(m.puntualidad),\n  impuestoEtiqueta: m.impuestoEtiqueta ?? "",
+  puntualidad: m.puntualidad === null ? "" : String(m.puntualidad),
+  impuestoEtiqueta: m.impuestoEtiqueta ?? "",
 });
 
 /**
@@ -79,10 +81,19 @@ export function FormularioMovimiento({
     }
   }
 
-  const esCobro = v.tipo === "cobro";\n  const esImpuesto = v.tipo === "impuesto";
+  const esCobro = v.tipo === "cobro";
+  const esImpuesto = v.tipo === "impuesto";
   return (
     <form onSubmit={enviar} noValidate aria-label={editando ? "Editar movimiento" : "Nuevo movimiento"}>
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-6">\n        {esImpuesto && (\n          <Selector etiqueta="Tipo de impuesto" value={v.impuestoEtiqueta} onChange={cambiar("impuestoEtiqueta")} error={errores.impuestoEtiqueta}>\n            <option value="">Otro (sin etiqueta)</option>\n            <option value="IVA">IVA</option>\n            <option value="Imp. Ganancias">Imp. Ganancias</option>\n            <option value="Impuesto al Cheque">Impuesto al Cheque</option>\n          </Selector>\n        )}
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-6">
+        {esImpuesto && (
+          <Selector etiqueta="Tipo de impuesto" value={v.impuestoEtiqueta} onChange={cambiar("impuestoEtiqueta")} error={errores.impuestoEtiqueta}>
+            <option value="">Otro (sin etiqueta)</option>
+            <option value="IVA">IVA</option>
+            <option value="Imp. Ganancias">Imp. Ganancias</option>
+            <option value="Impuesto al Cheque">Impuesto al Cheque</option>
+          </Selector>
+        )}
         <Selector etiqueta="Tipo" value={v.tipo} onChange={cambiar("tipo")} error={errores.tipo}>
           <option value="cobro">Cobro</option>
           <option value="pago">Pago</option>
