@@ -109,13 +109,29 @@ describe("validación de formularios", () => {
 
   it("movimiento válido; la puntualidad se descarta en pagos", () => {
     const v = validarMovimiento({ id: ID, tipo: "pago", concepto: " Flete ", monto: "1500,5", moneda: "ARS", fecha: "2026-10-01", puntualidad: "80" });
-    expect(v).toEqual({ ok: true, valor: { id: ID, tipo: "pago", concepto: "Flete", monto: 1500.5, moneda: "ARS", fecha: "2026-10-01", puntualidad: null } });
+    expect(v).toEqual({ ok: true, valor: { id: ID, tipo: "pago", concepto: "Flete", impuestoEtiqueta: null, monto: 1500.5, moneda: "ARS", fecha: "2026-10-01", puntualidad: null } });
   });
 
   it("rechaza tipos, monedas e ids inventados", () => {
     const v = validarMovimiento({ id: "x", tipo: "robo", concepto: "a", monto: 1, moneda: "EUR", fecha: "2026-10-01" });
     expect(v.ok).toBe(false);
     if (!v.ok) expect(Object.keys(v.errores).sort()).toEqual(["id", "moneda", "tipo"]);
+  });
+
+
+  it("clasifica conceptos antiguos de impuestos conocidos", () => {
+    const v = validarMovimiento({ id: ID, tipo: "impuesto", concepto: "IVA noviembre", monto: 100, moneda: "ARS", fecha: "2026-11-28" });
+    expect(v).toMatchObject({ ok: true, valor: { impuestoEtiqueta: "IVA" } });
+  });
+
+  it("respeta Otro aunque el detalle contenga el nombre de un impuesto conocido", () => {
+    const v = validarMovimiento({ id: ID, tipo: "impuesto", impuestoEtiqueta: "", concepto: "IVA ajuste manual no clasificado", monto: 100, moneda: "ARS", fecha: "2026-11-28" });
+    expect(v).toMatchObject({ ok: true, valor: { impuestoEtiqueta: null } });
+  });
+
+  it("guarda una etiqueta elegida en el formulario", () => {
+    const v = validarMovimiento({ id: ID, tipo: "impuesto", impuestoEtiqueta: "Imp. Ganancias", concepto: "Anticipo 5", monto: 100, moneda: "ARS", fecha: "2026-12-02" });
+    expect(v).toMatchObject({ ok: true, valor: { impuestoEtiqueta: "Imp. Ganancias" } });
   });
 
   it("formulario de empresa vacío", () => {
