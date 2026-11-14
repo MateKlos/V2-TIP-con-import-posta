@@ -15,7 +15,7 @@ export async function leerDatos(): Promise<DatosTesoreria | null> {
   if (!e) return null;
   const { data: movs, error } = await supabase
     .from("movimientos")
-    .select("id, tipo, concepto, monto, moneda, fecha, puntualidad")
+    .select("id, tipo, concepto, impuesto_etiqueta, monto, moneda, fecha, puntualidad")
     .order("fecha");
   if (error) throw new Error("No pudimos leer los movimientos.");
   return {
@@ -27,6 +27,6 @@ export async function leerDatos(): Promise<DatosTesoreria | null> {
       devaluacionMensual: Number(e.devaluacion_mensual),
       saldoMinimo: Number(e.saldo_minimo),
     },
-    movimientos: (movs ?? []).map((m) => ({ ...m, monto: Number(m.monto) }) as Movimiento),
+    movimientos: (movs ?? []).map((m) => ({ ...m, impuestoEtiqueta: m.impuesto_etiqueta ?? null, monto: Number(m.monto) }) as Movimiento),
   };
 }
