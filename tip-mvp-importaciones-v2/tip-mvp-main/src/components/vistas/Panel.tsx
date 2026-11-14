@@ -29,6 +29,7 @@ export function VistaPanel() {
   if (!datos || !analisis) return <Cargando />;
   const { kpis, saldos, alertas, proximos } = analisis;
   const sinMovimientos = datos.movimientos.length === 0;
+  const impuestos = datos.movimientos.filter((m) => m.tipo === "impuesto");
 
   return (
     <section>
@@ -61,7 +62,7 @@ export function VistaPanel() {
       <div className="mt-3.5 grid gap-3.5 lg:grid-cols-[1.6fr_1fr]">
         <div className="tarjeta min-w-0">
           <h2 className="subtitulo">Flujo de caja proyectado · próximos {HORIZONTE} días</h2>
-          <GraficoProyeccion hoy={hoy} saldos={saldos} />
+          <GraficoProyeccion hoy={hoy} saldos={saldos} impuestos={impuestos} />
           <p className="mt-2 text-xs text-apagado">
             Saldo en pesos. Los pagos en dólares se convierten al tipo de cambio proyectado de cada fecha.
           </p>
