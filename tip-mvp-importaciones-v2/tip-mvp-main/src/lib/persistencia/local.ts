@@ -2,7 +2,7 @@
 
 import { datosDeEjemplo } from "@/lib/tesoreria/demo";
 import type { DatosTesoreria } from "@/lib/tesoreria/tipos";
-import { validarEmpresa, validarMovimiento } from "@/lib/tesoreria/validacion";
+import { detectarEtiquetaImpuesto, validarEmpresa, validarMovimiento } from "@/lib/tesoreria/validacion";
 import type { Persistencia, Resultado } from "./tipos";
 
 const CLAVE = "tip-datos-v2";
@@ -11,7 +11,11 @@ const ok = { ok: true, valor: undefined } as const;
 export function leerLocal(hoy: string): DatosTesoreria {
   try {
     const guardado = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as DatosTesoreria | null;
-    if (guardado?.empresa && Array.isArray(guardado.movimientos)) return guardado;
+    if (guardado?.empresa && Array.isArray(guardado.movimientos)) {
+      const actualizado = { ...guardado, movimientos: guardado.movimientos.map((m) => ({ ...m, impuestoEtiqueta: m.impuestoEtiqueta ?? (m.tipo === "impuesto" ? detectarEtiquetaImpuesto(m.concepto) : null) })) };
+      escribir(actualizado);
+      return actualizado;
+    }
   } catch {}
   const ejemplo = datosDeEjemplo(hoy);
   escribir(ejemplo);
