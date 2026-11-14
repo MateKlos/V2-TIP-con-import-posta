@@ -12,7 +12,16 @@ export function leerLocal(hoy: string): DatosTesoreria {
   try {
     const guardado = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as DatosTesoreria | null;
     if (guardado?.empresa && Array.isArray(guardado.movimientos)) {
-      const actualizado = { ...guardado, movimientos: guardado.movimientos.map((m) => ({ ...m, impuestoEtiqueta: m.impuestoEtiqueta ?? (m.tipo === "impuesto" ? detectarEtiquetaImpuesto(m.concepto) : null) })) };
+      const actualizado = {
+        ...guardado,
+        movimientos: guardado.movimientos.map((m) => {
+          // Solo los registros anteriores a la etiqueta tienen undefined; null significa "Otro" elegido a mano.
+          const etiqueta = m.impuestoEtiqueta === undefined && m.tipo === "impuesto"
+            ? detectarEtiquetaImpuesto(m.concepto)
+            : m.impuestoEtiqueta ?? null;
+          return { ...m, impuestoEtiqueta: etiqueta };
+        }),
+      };
       escribir(actualizado);
       return actualizado;
     }
