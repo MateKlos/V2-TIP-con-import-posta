@@ -1,7 +1,7 @@
 -- Clasificación explícita de impuestos y compatibilidad con movimientos anteriores.
 alter table public.movimientos
   add column if not exists impuesto_etiqueta text
-  check (impuesto_etiqueta in ('IVA', 'Imp. Ganancias', 'Impuesto al Cheque'));
+  check (impuesto_etiqueta in ('IVA', 'Imp. Ganancias', 'Impuesto al Cheque', 'Ingresos Brutos'));
 
 -- Migrar conceptos antiguos conocidos una sola vez; los nuevos "Otros" quedan NULL.
 update public.movimientos
@@ -9,6 +9,7 @@ set impuesto_etiqueta = case
   when lower(concepto) like 'iva%' or lower(concepto) = 'impuesto al valor agregado' then 'IVA'
   when lower(concepto) like 'ganancias%' or lower(concepto) like 'impuesto de ganancias%' then 'Imp. Ganancias'
   when lower(concepto) like 'impuesto al cheque%' or lower(concepto) like 'cheque%' or (lower(concepto) like 'débitos y créditos%' or lower(concepto) like 'debitos y creditos%') then 'Impuesto al Cheque'
+  when lower(concepto) like '%ingresos brutos%' or lower(concepto) like '%iibb%' then 'Ingresos Brutos'
   else null
 end
 where tipo = 'impuesto' and impuesto_etiqueta is null;
