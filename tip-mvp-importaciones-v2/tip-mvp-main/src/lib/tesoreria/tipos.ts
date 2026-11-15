@@ -2,7 +2,7 @@
 
 export type TipoMovimiento = "cobro" | "pago" | "impuesto";
 export type Moneda = "ARS" | "USD";
-export type EtiquetaImpuesto = "IVA" | "Imp. Ganancias" | "Impuesto al Cheque";
+export type EtiquetaImpuesto = "IVA" | "Imp. Ganancias" | "Impuesto al Cheque" | "Ingresos Brutos";
 
 export const TIPOS: TipoMovimiento[] = ["cobro", "pago", "impuesto"];
 export const MONEDAS: Moneda[] = ["ARS", "USD"];
