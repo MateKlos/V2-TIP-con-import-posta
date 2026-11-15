@@ -46,8 +46,8 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
 type EventoImpositivo = Pick<Movimiento, "concepto" | "fecha" | "monto" | "moneda" | "impuestoEtiqueta">;
 type EventoMarcado = EventoImpositivo & { etiqueta: string; indice: number };
 
-/** Agrupa obligaciones de etiquetas distintas cuya distancia total no supera 12 días.
- * Si se repite la misma etiqueta (por ejemplo, otro IVA), empieza un grupo nuevo.
+/** Agrupa vencimientos cercanos y conecta las recurrencias mensuales de una misma etiqueta.
+ * Así, dos pagos de IVA en meses distintos conservan sus líneas y una banda entre ambas fechas.
  */
 function agruparImpuestos(hoy: string, impuestos: EventoImpositivo[], cantidadDias: number): EventoMarcado[][] {
   const eventos = impuestos.map((m) => ({ ...m, etiqueta: m.impuestoEtiqueta ?? "", indice: diasEntre(hoy, m.fecha) }))
@@ -55,8 +55,20 @@ function agruparImpuestos(hoy: string, impuestos: EventoImpositivo[], cantidadDi
     .sort((a, b) => a.indice - b.indice);
   const grupos: EventoMarcado[][] = [];
   for (const evento of eventos) {
+    // Una recurrencia de la misma etiqueta en otro mes se suma al grupo original,
+    // aunque entre ambos vencimientos haya más de 12 días.
+    const grupoRecurrente = grupos.find((g) =>
+      g.some((anterior) => anterior.etiqueta === evento.etiqueta && anterior.fecha.slice(0, 7) !== evento.fecha.slice(0, 7))
+    );
+    if (grupoRecurrente) {
+      grupoRecurrente.push(evento);
+      grupoRecurrente.sort((a, b) => a.indice - b.indice);
+      continue;
+    }
     const grupo = grupos[grupos.length - 1];
-    const mismaEtiquetaEnGrupo = grupo?.some((anterior) => anterior.etiqueta === evento.etiqueta);
+    const mismaEtiquetaEnGrupo = grupo?.some((anterior) =>
+      anterior.etiqueta === evento.etiqueta && anterior.fecha.slice(0, 7) === evento.fecha.slice(0, 7)
+    );
     const excedeVentana = !!grupo && evento.indice - grupo[0].indice > 12;
     if (!grupo || mismaEtiquetaEnGrupo || excedeVentana) grupos.push([evento]);
     else grupo.push(evento);
