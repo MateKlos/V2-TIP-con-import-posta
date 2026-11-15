@@ -59,7 +59,7 @@ export async function guardarMovimiento(entrada: Movimiento): Promise<Resultado>
   const empresaId = await idEmpresa(supabase);
   if (!empresaId) return falla("Primero cargá los datos de tu empresa.");
   // upsert por id: si el mismo formulario se envía dos veces, queda un solo movimiento.
-  const { error } = await supabase.from("movimientos").upsert({ ...v.valor, empresa_id: empresaId }, { onConflict: "id" });
+  const { error } = await supabase.from("movimientos").upsert({ ...v.valor, impuesto_etiqueta: v.valor.impuestoEtiqueta ?? null, empresa_id: empresaId }, { onConflict: "id" });
   return error ? falla(ERROR_GENERICO) : listo;
 }
 
@@ -81,7 +81,8 @@ export async function importarMovimientos(movs: Movimiento[], reemplazar: boolea
   }
   const { supabase, usuario } = await sesion();
   if (!usuario) return falla("Tu sesión expiró. Volvé a ingresar.");
-  const { error } = await supabase.rpc("importar_movimientos", { p_movimientos: validos, p_reemplazar: reemplazar === true });
+  const payload = validos.map((m) => ({ ...m, impuesto_etiqueta: m.impuestoEtiqueta ?? null }));
+  const { error } = await supabase.rpc("importar_movimientos", { p_movimientos: payload, p_reemplazar: reemplazar === true });
   return error ? falla("No pudimos importar los movimientos.") : listo;
 }
 

@@ -2,6 +2,7 @@
 
 export type TipoMovimiento = "cobro" | "pago" | "impuesto";
 export type Moneda = "ARS" | "USD";
+export type EtiquetaImpuesto = "IVA" | "Imp. Ganancias" | "Impuesto al Cheque" | "Ingresos Brutos";
 
 export const TIPOS: TipoMovimiento[] = ["cobro", "pago", "impuesto"];
 export const MONEDAS: Moneda[] = ["ARS", "USD"];
@@ -10,6 +11,8 @@ export interface Movimiento {
   id: string;
   tipo: TipoMovimiento;
   concepto: string;
+  /** Categoría reconocida para marcar vencimientos; null para impuestos personalizados. */
+  impuestoEtiqueta?: EtiquetaImpuesto | null;
   monto: number;
   moneda: Moneda;
   /** Fecha en formato aaaa-mm-dd. */

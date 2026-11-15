@@ -18,18 +18,16 @@ const vacio = (hoy: string): Valores => ({
   moneda: "ARS",
   fecha: sumarDias(hoy, 7),
   puntualidad: "",
+  impuestoEtiqueta: "",
 });
 
 const aTexto = (m: Movimiento): Valores => ({
   ...m,
   monto: String(m.monto),
   puntualidad: m.puntualidad === null ? "" : String(m.puntualidad),
+  impuestoEtiqueta: m.impuestoEtiqueta ?? "",
 });
 
-/**
- * Alta o edición de un movimiento. El id se genera al abrir el formulario y la
- * base hace upsert por id: un doble clic no puede crear dos movimientos.
- */
 export function FormularioMovimiento({
   hoy,
   editando,
@@ -80,6 +78,7 @@ export function FormularioMovimiento({
   }
 
   const esCobro = v.tipo === "cobro";
+  const esImpuesto = v.tipo === "impuesto";
   return (
     <form onSubmit={enviar} noValidate aria-label={editando ? "Editar movimiento" : "Nuevo movimiento"}>
       <div className="grid grid-cols-2 gap-2.5 md:grid-cols-6">
@@ -88,15 +87,32 @@ export function FormularioMovimiento({
           <option value="pago">Pago</option>
           <option value="impuesto">Impuesto</option>
         </Selector>
+        {esImpuesto && (
+          <Selector
+            etiqueta="Impuesto"
+            value={v.impuestoEtiqueta}
+            onChange={cambiar("impuestoEtiqueta")}
+            error={errores.impuestoEtiqueta}
+          >
+            <option value="">Otro (escribir detalle)</option>
+            <option value="IVA">IVA</option>
+            <option value="Imp. Ganancias">Imp. Ganancias</option>
+            <option value="Impuesto al Cheque">Impuesto al Cheque</option>
+            <option value="Ingresos Brutos">Ingresos Brutos</option>
+          </Selector>
+        )}
         <div className="col-span-2 md:col-span-2 md:order-none">
           <Campo
             id="concepto"
-            etiqueta={esCobro ? "Cliente / concepto" : v.tipo === "pago" ? "Proveedor / concepto" : "Impuesto"}
+            etiqueta={esCobro ? "Cliente / concepto" : v.tipo === "pago" ? "Proveedor / concepto" : "Detalle / referencia"}
             value={v.concepto}
             onChange={cambiar("concepto")}
             error={errores.concepto}
-            placeholder={esCobro ? "Cliente Alarmas Norte" : v.tipo === "pago" ? "Proveedor Shenzhen" : "IVA"}
+            placeholder={esCobro ? "Cliente Alarmas Norte" : v.tipo === "pago" ? "Proveedor Shenzhen" : v.impuestoEtiqueta || "Ej. período fiscal o descripción del otro impuesto"}
           />
+          {esImpuesto && !v.impuestoEtiqueta && (
+            <p className="mt-1 text-[11px] text-apagado">Los impuestos escritos como «Otro» no se marcarán automáticamente en el gráfico.</p>
+          )}
         </div>
         <Campo id="monto" etiqueta="Monto" type="number" inputMode="decimal" step="any" min={0} value={v.monto} onChange={cambiar("monto")} error={errores.monto} />
         <Selector etiqueta="Moneda" value={v.moneda} onChange={cambiar("moneda")} error={errores.moneda}>
@@ -116,7 +132,7 @@ export function FormularioMovimiento({
               value={v.puntualidad}
               onChange={cambiar("puntualidad")}
               error={errores.puntualidad}
-              ayuda="% de veces que pagó a tiempo. Si no lo sabés, dejalo vacío."
+              ayuda=" % de veces que pagó a tiempo. Si no lo sabés, dejalo vacío."
             />
           </div>
         )}
