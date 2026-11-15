@@ -98,6 +98,7 @@ export function FormularioMovimiento({
             <option value="IVA">IVA</option>
             <option value="Imp. Ganancias">Imp. Ganancias</option>
             <option value="Impuesto al Cheque">Impuesto al Cheque</option>
+            <option value="Ingresos Brutos">Ingresos Brutos</option>
           </Selector>
         )}
         <div className="col-span-2 md:col-span-2 md:order-none">
