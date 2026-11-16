@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import type { Resultado } from "@/lib/persistencia/tipos";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { supabaseConfigurado } from "@/lib/supabase/config";
 import { datosDeEjemplo } from "@/lib/tesoreria/demo";
 import { hoyISO } from "@/lib/tesoreria/fechas";
 import { MAX_FILAS } from "@/lib/tesoreria/importacion";
@@ -131,7 +132,9 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
 }
 
 export async function cerrarSesion() {
-  const supabase = await crearClienteServidor();
-  await supabase.auth.signOut();
+  if (supabaseConfigurado) {
+    const supabase = await crearClienteServidor();
+    await supabase.auth.signOut();
+  }
   redirect("/ingresar");
 }
