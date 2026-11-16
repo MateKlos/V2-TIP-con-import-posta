@@ -16,7 +16,7 @@ export function Marca() {
   return (
     <div className="flex items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo.svg" alt="" width={38} height={38} />
+      <img src="/tip_el-copiloto-tu-gestión/logo.svg" alt="" width={38} height={38} />
       <div>
         <b className="block text-[26px] leading-none tracking-tight text-violeta">TIP</b>
         <span className="block text-xs italic text-apagado">Tesorería inteligente para PyMEs</span>
