@@ -111,20 +111,6 @@ function crearPluginVencimientos(
         ctx.fillStyle = "rgba(217, 119, 6, 0.12)";
         ctx.fillRect(izquierda, chartArea.top, ancho, chartArea.bottom - chartArea.top);
 
-        // Etiqueta permanente del período, dentro del área sombreada.
-        const primero = banda.impuestos[0];
-        const ultimo = banda.impuestos[banda.impuestos.length - 1];
-        const etiqueta = `Impuestos · ${fechaCorta(primero.fecha)} al ${fechaCorta(ultimo.fecha)}`;
-        ctx.font = "600 10px sans-serif";
-        const anchoTexto = ctx.measureText(etiqueta).width;
-        const cajaAncho = anchoTexto + 12;
-        const cajaX = Math.max(chartArea.left + 2, Math.min(izquierda + 18, chartArea.right - cajaAncho - 2));
-        const cajaY = chartArea.top + 5 + indice * 21;
-        ctx.fillStyle = "rgba(255, 250, 240, 0.94)";
-        ctx.fillRect(cajaX, cajaY, cajaAncho, 17);
-        ctx.fillStyle = "#9A5700";
-        ctx.textBaseline = "middle";
-        ctx.fillText(etiqueta, cajaX + 6, cajaY + 8.5);
       });
 
       // Solo se puntean los extremos de períodos con dos o más vencimientos.
@@ -152,6 +138,26 @@ function crearPluginVencimientos(
     // En un vencimiento intermedio, la guía aparece solo al pasar el cursor
     // o al seleccionarlo con el teclado. No se dibuja un punto adicional.
     afterDatasetsDraw(chart) {
+      const { ctx: labelCtx, chartArea: labelArea, scales: labelScales } = chart;
+      if (labelArea) {
+        labelCtx.save();
+        labelCtx.font = "600 10px sans-serif";
+        labelCtx.textBaseline = "middle";
+        bandas.forEach((banda, indice) => {
+          const xFinal = labelScales.x.getPixelForValue(banda.hasta);
+          const primero = banda.impuestos[0];
+          const ultimo = banda.impuestos[banda.impuestos.length - 1];
+          const etiqueta = `Impuestos · ${fechaCorta(primero.fecha)} al ${fechaCorta(ultimo.fecha)}`;
+          const cajaAncho = labelCtx.measureText(etiqueta).width + 12;
+          const cajaX = Math.min(xFinal + 14, labelArea.right - cajaAncho - 2);
+          const cajaY = labelArea.top + 5 + indice * 21;
+          labelCtx.fillStyle = "rgba(255, 250, 240, 0.98)";
+          labelCtx.fillRect(cajaX, cajaY, cajaAncho, 17);
+          labelCtx.fillStyle = "#9A5700";
+          labelCtx.fillText(etiqueta, cajaX + 6, cajaY + 8.5);
+        });
+        labelCtx.restore();
+      }
       const activo = chart.getActiveElements()[0]?.index;
       if (activo === undefined) return;
       const banda = bandas.find((b) => activo >= b.desde && activo <= b.hasta);
