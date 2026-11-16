@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cerrarSesion } from "@/app/acciones";
 import { connection } from "next/server";
 import { DatosProvider } from "@/components/DatosProvider";
 import { Encabezado } from "@/components/Encabezado";
@@ -22,7 +23,16 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
 
   return (
     <DatosProvider hoy={hoy} modo={supabaseConfigurado ? "supabase" : "local"} inicial={inicial}>
-      <Encabezado derecha={derecha} />
+      <Encabezado derecha={
+        <form action={cerrarSesion}>
+          <button
+            className="rounded-xl bg-violeta px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violeta-oscuro"
+            type="submit"
+          >
+            Cerrar sesión
+          </button>
+        </form>
+      } />
       <main className="mx-auto max-w-[1180px] px-4 pb-10 sm:px-5">
         {children}
         <p className="mt-7 text-center text-xs text-apagado">TIP · MVP · Desarrollo de Nuevos Negocios 2026</p>
