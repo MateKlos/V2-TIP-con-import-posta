@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { BotonEjemplo } from "@/components/BotonEjemplo";
 import { Cargando } from "@/components/Cargando";
 import { useDatos } from "@/components/DatosProvider";
@@ -82,7 +82,21 @@ export function VistaDatos() {
                 </tr>
               </thead>
               <tbody>
-                {movimientos.map((m) => (
+                {movimientos.map((m, indice) => {
+                  const fecha = new Date(`${m.fecha}T12:00:00`);
+                  const anterior = indice > 0 ? new Date(`${movimientos[indice - 1].fecha}T12:00:00`) : null;
+                  const nuevoMes = !anterior || fecha.getMonth() !== anterior.getMonth() || fecha.getFullYear() !== anterior.getFullYear();
+                  const mes = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(fecha);
+                  const tituloMes = mes.charAt(0).toLocaleUpperCase("es-AR") + mes.slice(1);
+                  return (
+                  <Fragment key={m.id}>
+                    {nuevoMes && (
+                      <tr>
+                        <td colSpan={6} className="border-b border-linea border-t-2 border-t-violeta/40 bg-lavanda/60 px-2 py-2 text-xs font-bold text-violeta-oscuro">
+                          {tituloMes}
+                        </td>
+                      </tr>
+                    )}
                   <tr key={m.id} className="border-b border-linea" data-testid="fila-movimiento">
                     <td className="px-1.5 py-1.5 whitespace-nowrap">
                       {fechaCorta(m.fecha)}/{m.fecha.slice(2, 4)} {m.fecha < hoy && <span className="tag tag-ambar ml-1">vencido</span>}
@@ -98,14 +112,24 @@ export function VistaDatos() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
 
             {/* Celular: tarjetas */}
             <ul className="flex flex-col divide-y divide-linea md:hidden">
-              {movimientos.map((m) => (
-                <li key={m.id} className="py-2.5" data-testid="tarjeta-movimiento">
+              {movimientos.map((m, indice) => {
+                const fecha = new Date(`${m.fecha}T12:00:00`);
+                const anterior = indice > 0 ? new Date(`${movimientos[indice - 1].fecha}T12:00:00`) : null;
+                const nuevoMes = !anterior || fecha.getMonth() !== anterior.getMonth() || fecha.getFullYear() !== anterior.getFullYear();
+                const mes = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(fecha);
+                const tituloMes = mes.charAt(0).toLocaleUpperCase("es-AR") + mes.slice(1);
+                return (
+                <Fragment key={m.id}>
+                {nuevoMes && <li className="border-t-2 border-violeta/40 bg-lavanda/60 px-2 py-2 text-xs font-bold text-violeta-oscuro">{tituloMes}</li>}
+                <li className="py-2.5" data-testid="tarjeta-movimiento">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-medium break-words">{m.concepto}</div>
@@ -123,7 +147,9 @@ export function VistaDatos() {
                     <button className="btn btn-texto" onClick={() => borrar(m)} disabled={borrando === m.id}>Borrar</button>
                   </div>
                 </li>
-              ))}
+                </Fragment>
+                );
+              })}
             </ul>
           </>
         )}
