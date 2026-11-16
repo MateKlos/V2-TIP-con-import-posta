@@ -36,7 +36,7 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
       legend: { display: false },
       tooltip: {
         filter: filtrarTooltip ? (i) => filtrarTooltip(i.datasetIndex) : undefined,
-        callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(c.parsed.y ?? 0)}` },
+        callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(Number(c.raw ?? 0))}` },
       },
     },
     scales: {
@@ -289,7 +289,7 @@ export function GraficoEscenario({
             },
           ],
         }}
-        options={opciones((i) => i > 1)}
+        options={opciones((i) => i === 2 || i === 3)}
       />
     </div>
   );

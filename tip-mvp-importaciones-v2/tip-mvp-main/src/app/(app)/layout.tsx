@@ -21,7 +21,7 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
     derecha = (
       <form action={cerrarSesion} className="flex items-center gap-2">
         <span className="hidden max-w-48 truncate text-xs text-apagado sm:inline" title={usuario.email}>{usuario.email}</span>
-        <button className="btn btn-sec px-3 py-1.5 text-xs" type="submit">Salir</button>
+        <button className="btn btn-sec px-3 py-1.5 text-xs" type="submit">Cerrar sesión</button>
       </form>
     );
   }
