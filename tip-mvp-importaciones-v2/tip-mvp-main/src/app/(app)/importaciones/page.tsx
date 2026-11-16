@@ -1,7 +1,7 @@
-import { VistaImportaciones } from "@/components/vistas/Importaciones";
+import { CentroOperacionesImportaciones } from "@/components/vistas/CentroOperacionesImportaciones";
 
-export const metadata = { title: "Importaciones · TIP" };
+export const metadata = { title: "Centro de operaciones · TIP" };
 
 export default function Page() {
-  return <VistaImportaciones />;
+  return <CentroOperacionesImportaciones />;
 }
