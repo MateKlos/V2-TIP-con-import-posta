@@ -118,6 +118,7 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Escribí un email válido.", email };
   if (password.length < 6) return { error: "La contraseña tiene que tener al menos 6 caracteres.", email };
 
+  if (!supabaseConfigurado) return { error: "El ingreso y la creación de cuentas no están disponibles en este entorno." };
   const supabase = await crearClienteServidor();
   if (modo === "registro") {
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -133,8 +134,12 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
 
 export async function cerrarSesion() {
   if (supabaseConfigurado) {
-    const supabase = await crearClienteServidor();
-    await supabase.auth.signOut();
+    try {
+      const supabase = await crearClienteServidor();
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Aunque falle la revocación remota, no dejamos al usuario atrapado en el Panel.
+    }
   }
   redirect("/ingresar");
 }
