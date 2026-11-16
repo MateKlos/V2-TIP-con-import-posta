@@ -54,7 +54,6 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
  * - al seleccionar un vencimiento intermedio, una guía hasta la curva, sin crear otro punto.
  */
 function crearPluginVencimientos(
-  hoy: string,
   impuestos: ImpuestoProyeccion[],
   saldos: number[],
 ): Plugin<"line"> {
@@ -126,7 +125,8 @@ function crearPluginVencimientos(
       const activo = chart.getActiveElements()[0]?.index;
       if (activo === undefined) return;
       const banda = bandas.find((b) => activo >= b.desde && activo <= b.hasta);
-      if (!banda || activo === banda.desde || activo === banda.hasta) return;
+      const esVencimientoIntermedio = banda?.impuestos.some((imp) => imp.dia === activo);
+      if (!banda || !esVencimientoIntermedio || activo === banda.desde || activo === banda.hasta) return;
 
       const { ctx, chartArea, scales } = chart;
       if (!chartArea) return;
@@ -213,7 +213,9 @@ export function GraficoProyeccion({
             const dia = items[0]?.dataIndex;
             if (dia === undefined) return [];
             const banda = bandas.find((b) => dia >= b.desde && dia <= b.hasta);
-            const lista = banda ? banda.impuestos : impuestos.filter((i) => i.dia === dia);
+            const lista = banda
+              ? banda.impuestos.filter((i) => i.dia === dia)
+              : impuestos.filter((i) => i.dia === dia);
             if (lista.length === 0) return [];
             const lineas = lista.map((i) => `${i.concepto} · ${fechaCorta(i.fecha)} · ${fmtMonto(i.monto, i.moneda)}`);
             return banda ? ["Período de caja sensible:", ...lineas] : lineas;
@@ -248,7 +250,7 @@ export function GraficoProyeccion({
           ],
         }}
         options={opcionesFinales}
-        plugins={impuestos.length > 0 ? [crearPluginVencimientos(hoy, impuestos, saldos)] : []}
+        plugins={impuestos.length > 0 ? [crearPluginVencimientos(impuestos, saldos)] : []}
       />
     </div>
   );
