@@ -7,6 +7,7 @@ import { GraficoProyeccion } from "@/components/Graficos";
 import { BotonEjemplo } from "@/components/BotonEjemplo";
 import { Cargando } from "@/components/Cargando";
 import { HORIZONTE } from "@/lib/tesoreria/proyeccion";
+import { impuestosEnHorizonte } from "@/lib/tesoreria/impuestos";
 import { enDias, fmtARS, fmtMonto, fmtUSD } from "@/lib/tesoreria/formato";
 import { fechaCorta } from "@/lib/tesoreria/fechas";
 
@@ -29,10 +30,13 @@ export function VistaPanel() {
   if (!datos || !analisis) return <Cargando />;
   const { kpis, saldos, alertas, proximos } = analisis;
   const sinMovimientos = datos.movimientos.length === 0;
+  const impuestos = impuestosEnHorizonte(datos.movimientos, hoy, HORIZONTE);
 
   return (
     <section>
-      <h1 className="titulo mb-3 text-xl">{datos.empresa.nombre}</h1>
+      <div className="mb-3">
+        <h1 className="titulo text-xl">{datos.empresa.nombre}</h1>
+      </div>
 
       {sinMovimientos && (
         <div className="tarjeta mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-testid="vacio">
@@ -61,7 +65,13 @@ export function VistaPanel() {
       <div className="mt-3.5 grid gap-3.5 lg:grid-cols-[1.6fr_1fr]">
         <div className="tarjeta min-w-0">
           <h2 className="subtitulo">Flujo de caja proyectado · próximos {HORIZONTE} días</h2>
-          <GraficoProyeccion hoy={hoy} saldos={saldos} />
+          <GraficoProyeccion hoy={hoy} saldos={saldos} impuestos={impuestos} />
+          {impuestos.length > 0 && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-apagado">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#D97706" }} />
+              La banda marca el período sensible. Los extremos están punteados; al recorrer un vencimiento intermedio aparece su detalle.
+            </p>
+          )}
           <p className="mt-2 text-xs text-apagado">
             Saldo en pesos. Los pagos en dólares se convierten al tipo de cambio proyectado de cada fecha.
           </p>

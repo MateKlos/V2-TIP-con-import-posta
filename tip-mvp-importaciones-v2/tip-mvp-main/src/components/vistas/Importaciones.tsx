@@ -135,80 +135,6 @@ function MapaMundi({
   );
 }
 
-function GuiaImportacion() {
-  const pasos = [
-    {
-      n: "01", titulo: "Definí el producto y su posición arancelaria",
-      texto: "Reuní ficha técnica, composición, uso, marca y modelo. La clasificación NCM/SIM determina tributos, intervenciones y requisitos; validala con un despachante.",
-      resultado: "Resultado: posición arancelaria a verificar.",
-    },
-    {
-      n: "02", titulo: "Revisá requisitos y habilitaciones",
-      texto: "Comprobá que la empresa pueda operar y consultá si el producto requiere autorizaciones, certificaciones o intervención de organismos técnicos.",
-      resultado: "Resultado: checklist de permisos y documentación.",
-    },
-    {
-      n: "03", titulo: "Compará proveedores y condiciones comerciales",
-      texto: "Pedí una proforma con descripción, cantidades, moneda, Incoterm, forma de pago, plazo de producción y vigencia. Verificá referencias del proveedor.",
-      resultado: "Resultado: costo y condiciones acordadas.",
-    },
-    {
-      n: "04", titulo: "Calculá el costo total y planificá la caja",
-      texto: "Sumá mercadería, flete, seguro, gastos bancarios, tributos, honorarios y gastos locales. Armá un calendario de anticipos, saldo y vencimientos.",
-      resultado: "Resultado: costo puesto en destino y flujo de pagos.",
-    },
-    {
-      n: "05", titulo: "Coordiná transporte y documentación",
-      texto: "Definí transporte, seguro y operador logístico. Prepará factura comercial, packing list, documento de transporte y certificado de origen cuando corresponda.",
-      resultado: "Resultado: embarque documentado y trazable.",
-    },
-    {
-      n: "06", titulo: "Gestioná el pago y el despacho aduanero",
-      texto: "Verificá las reglas cambiarias vigentes con tu banco y el despachante. Registrá la destinación, atendé controles y coordiná el pago de tributos y liberación.",
-      resultado: "Resultado: mercadería nacionalizada y disponible.",
-    },
-    {
-      n: "07", titulo: "Cerrá la operación y actualizá tus costos",
-      texto: "Conciliá pagos, gastos reales, diferencias de cambio y costos logísticos. Compará el costo final con el presupuesto para mejorar la próxima compra.",
-      resultado: "Resultado: costo real y aprendizaje para la próxima importación.",
-    },
-  ];
-
-  return (
-    <section id="guia-importacion" className="scroll-mt-6">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[.14em] text-violeta">Del proveedor a tu depósito</p>
-          <h2 className="titulo text-xl">Guía paso a paso para importar</h2>
-          <p className="mt-1 max-w-3xl text-sm text-apagado">Una hoja de ruta general para ordenar una importación comercial en Argentina. Los requisitos concretos cambian según el producto, la operación y la normativa vigente.</p>
-        </div>
-        <a className="btn btn-sec" href="https://www.vuce.gob.ar/" target="_blank" rel="noreferrer">Consultar VUCE <span aria-hidden="true">↗</span></a>
-      </div>
-      <div className="guia-grid">
-        {pasos.map((paso) => (
-          <article className="guia-paso" key={paso.n}>
-            <span className="guia-numero">{paso.n}</span>
-            <div>
-              <h3>{paso.titulo}</h3>
-              <p>{paso.texto}</p>
-              <span className="guia-resultado">{paso.resultado}</span>
-            </div>
-          </article>
-        ))}
-      </div>
-      <div className="alerta alerta-info mt-4">
-        <p className="font-semibold">Antes de avanzar</p>
-        <p className="mt-1 text-[13px]">Esta guía es orientativa y no reemplaza el asesoramiento de un despachante de aduana, contador o entidad bancaria. No tomes aranceles, autorizaciones ni plazos de pago como universales: verificá cada operación por posición arancelaria y normativa actual.</p>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold">
-          <a className="text-violeta underline" href="https://www.vuce.gob.ar/" target="_blank" rel="noreferrer">VUCE · Central de información ↗</a>
-          <a className="text-violeta underline" href="https://www.arca.gob.ar/registroAduanero/" target="_blank" rel="noreferrer">ARCA · Registros aduaneros ↗</a>
-          <a className="text-violeta underline" href="https://www.argentina.gob.ar/vuce/preguntas-frecuentes" target="_blank" rel="noreferrer">Preguntas frecuentes oficiales ↗</a>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function PreguntasFrecuentes() {
   const preguntas = [
     {
@@ -328,7 +254,6 @@ export function VistaImportaciones() {
           <p className="font-semibold">Planificá tu próxima importación con más contexto.</p>
           <p className="mt-0.5 text-sm text-apagado">Seleccioná un país en el mapamundi para explorar sectores, logística y puntos de atención; después registrá el compromiso de pago para verlo en tu proyección.</p>
         </div>
-        <a href="#guia-importacion" className="btn btn-sec whitespace-nowrap">Ver guía para importar <span aria-hidden="true">↓</span></a>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,.8fr)]">
@@ -405,8 +330,18 @@ export function VistaImportaciones() {
         </div>
       </div>
 
-      <GuiaImportacion />
       <PreguntasFrecuentes />
+
+      <div className="text-center text-xs text-apagado">
+        ¿Necesitás una referencia?{" "}
+        <a
+          href="/guias/guia-general-importacion-argentina.pdf"
+          download
+          className="font-medium text-violeta underline underline-offset-2 hover:text-violeta-oscuro"
+        >
+          Descargar guía general de importación (PDF)
+        </a>
+      </div>
     </section>
   );
 }

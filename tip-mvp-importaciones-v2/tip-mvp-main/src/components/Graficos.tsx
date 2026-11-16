@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -9,17 +10,54 @@ import {
   PointElement,
   Tooltip,
   type ChartOptions,
+  type Plugin,
 } from "chart.js";
+import type { KeyboardEvent } from "react";
 import { Line } from "react-chartjs-2";
 import { fechaCorta, sumarDias } from "@/lib/tesoreria/fechas";
-import { fmtARS, fmtMillones } from "@/lib/tesoreria/formato";
+import { fmtARS, fmtMillones, fmtMonto } from "@/lib/tesoreria/formato";
+import { bandasImpuestos, type ImpuestoProyeccion } from "@/lib/tesoreria/impuestos";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
 const VIOLETA = "#5449DD";
 const APAGADO = "#7A7398";
+const AMBAR = "#D97706";
 
 const etiquetas = (hoy: string, n: number) => Array.from({ length: n }, (_, t) => fechaCorta(sumarDias(hoy, t)));
+function crearPluginSeparadoresMensuales(hoy: string, cantidadDias: number): Plugin<"line"> {
+  const fechas = Array.from({ length: cantidadDias }, (_, indice) => {
+    const fecha = new Date(`${hoy}T12:00:00`);
+    fecha.setDate(fecha.getDate() + indice);
+    return fecha;
+  });
+  const meses = fechas
+    .map((fecha, indice) => ({ fecha, indice }))
+    .filter(({ fecha, indice }) => indice === 0 || fecha.getMonth() !== fechas[indice - 1].getMonth() || fecha.getFullYear() !== fechas[indice - 1].getFullYear());
+
+  return {
+    id: "separadores-mensuales",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      ctx.save();
+      ctx.font = "600 10px sans-serif";
+      ctx.textBaseline = "middle";
+      meses.forEach(({ fecha, indice }) => {
+        const px = scales.x.getPixelForValue(indice);
+        ctx.strokeStyle = "#E4DFEF";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(px, chartArea.top);
+        ctx.lineTo(px, chartArea.bottom);
+        ctx.stroke();
+      });
+      ctx.restore();
+    },
+  };
+}
+
 
 function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line"> {
   return {
@@ -31,9 +69,10 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
       legend: { display: false },
       tooltip: {
         filter: filtrarTooltip ? (i) => filtrarTooltip(i.datasetIndex) : undefined,
-        callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(c.parsed.y ?? 0)}` },
+        callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(Number(c.raw ?? 0))}` },
       },
     },
+    layout: { padding: { top: 8 } },
     scales: {
       x: { ticks: { maxTicksLimit: 8, color: APAGADO, maxRotation: 0 }, grid: { display: false } },
       y: { ticks: { color: APAGADO, callback: (v) => fmtMillones(Number(v)), maxTicksLimit: 6 }, grid: { color: "#ECE8F6" } },
@@ -41,11 +80,197 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
   };
 }
 
+/**
+ * Los períodos sensibles se dibujan sobre el área de la proyección:
+ * - sombreado continuo entre el primer y el último vencimiento del grupo;
+ * - líneas punteadas solo en los extremos;
+ * - etiqueta permanente con el rango de fechas;
+ * - al seleccionar un vencimiento intermedio, una guía hasta la curva, sin crear otro punto.
+ */
+function crearPluginVencimientos(
+  impuestos: ImpuestoProyeccion[],
+  saldos: number[],
+): Plugin<"line"> {
+  const bandas = bandasImpuestos(impuestos);
+
+  return {
+    id: "vencimientos",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      const { x } = scales;
+      ctx.save();
+
+      bandas.forEach((banda, indice) => {
+        const x1 = x.getPixelForValue(banda.desde);
+        const x2 = x.getPixelForValue(banda.hasta);
+        const izquierda = Math.min(x1, x2);
+        const ancho = Math.abs(x2 - x1);
+
+        // El sombreado queda integrado al área de la proyección, detrás de la curva.
+        ctx.fillStyle = "rgba(217, 119, 6, 0.12)";
+        ctx.fillRect(izquierda, chartArea.top, ancho, chartArea.bottom - chartArea.top);
+
+      });
+
+      // Solo se puntean los extremos de períodos con dos o más vencimientos.
+      // Un impuesto aislado no genera sombreado ni línea punteada.
+      const diasMarcados = new Set<number>();
+      for (const banda of bandas) {
+        diasMarcados.add(banda.desde);
+        diasMarcados.add(banda.hasta);
+      }
+
+      ctx.strokeStyle = AMBAR;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      for (const dia of diasMarcados) {
+        const px = x.getPixelForValue(dia);
+        ctx.beginPath();
+        ctx.moveTo(px, chartArea.top);
+        ctx.lineTo(px, chartArea.bottom);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    },
+
+    // En un vencimiento intermedio, la guía aparece solo al pasar el cursor
+    // o al seleccionarlo con el teclado. No se dibuja un punto adicional.
+    afterDatasetsDraw(chart) {
+      const { ctx: labelCtx, chartArea: labelArea, scales: labelScales } = chart;
+      if (labelArea) {
+        labelCtx.save();
+        labelCtx.font = "600 10px sans-serif";
+        labelCtx.textBaseline = "middle";
+        bandas.forEach((banda, indice) => {
+          const xFinal = labelScales.x.getPixelForValue(banda.hasta);
+          const primero = banda.impuestos[0];
+          const ultimo = banda.impuestos[banda.impuestos.length - 1];
+          const etiqueta = `Impuestos · ${fechaCorta(primero.fecha)} al ${fechaCorta(ultimo.fecha)}`;
+          const cajaAncho = labelCtx.measureText(etiqueta).width + 12;
+          const cajaX = Math.min(xFinal + 14, labelArea.right - cajaAncho - 2);
+          const cajaY = labelArea.top + 5 + indice * 21;
+          labelCtx.fillStyle = "rgba(255, 250, 240, 0.98)";
+          labelCtx.fillRect(cajaX, cajaY, cajaAncho, 17);
+          labelCtx.fillStyle = "#9A5700";
+          labelCtx.fillText(etiqueta, cajaX + 6, cajaY + 8.5);
+        });
+        labelCtx.restore();
+      }
+      const activo = chart.getActiveElements()[0]?.index;
+      if (activo === undefined) return;
+      const banda = bandas.find((b) => activo >= b.desde && activo <= b.hasta);
+      const esVencimientoIntermedio = banda?.impuestos.some((imp) => imp.dia === activo);
+      if (!banda || !esVencimientoIntermedio || activo === banda.desde || activo === banda.hasta) return;
+
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      const px = scales.x.getPixelForValue(activo);
+      const valor = saldos[activo];
+      if (valor === undefined) return;
+      const py = scales.y.getPixelForValue(valor);
+
+      ctx.save();
+      ctx.strokeStyle = AMBAR;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(px, chartArea.top);
+      ctx.lineTo(px, Math.max(chartArea.top, Math.min(py, chartArea.bottom)));
+      ctx.stroke();
+      ctx.restore();
+    },
+  };
+}
+
 /** Saldo proyectado; la zona por debajo de cero se pinta de rojo. */
-export function GraficoProyeccion({ hoy, saldos }: { hoy: string; saldos: number[] }) {
+export function GraficoProyeccion({
+  hoy,
+  saldos,
+  impuestos = [],
+}: {
+  hoy: string;
+  saldos: number[];
+  impuestos?: ImpuestoProyeccion[];
+}) {
+  const chartRef = useRef<ChartJS<"line"> | null>(null);
+  const bandas = bandasImpuestos(impuestos);
+  const base = opciones();
+
+  const seleccionarDia = (dia: number) => {
+    const chart = chartRef.current;
+    if (!chart || dia < 0 || dia >= saldos.length) return;
+    const activos = [{ datasetIndex: 0, index: dia }];
+    chart.setActiveElements(activos);
+    const punto = chart.getDatasetMeta(0).data[dia];
+    if (punto) {
+      const posicion = punto.getProps(["x", "y"], true);
+      chart.tooltip?.setActiveElements(activos, { x: posicion.x, y: posicion.y });
+    }
+    chart.update();
+  };
+
+  const manejarTeclado = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!impuestos.length) return;
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    if (event.key === "Escape") {
+      chart.setActiveElements([]);
+      chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
+      chart.update();
+      return;
+    }
+
+    const actual = chart.getActiveElements()[0]?.index;
+    let siguiente: number | null = null;
+    if (event.key === "ArrowRight") siguiente = Math.min(saldos.length - 1, (actual ?? -1) + 1);
+    if (event.key === "ArrowLeft") siguiente = Math.max(0, (actual ?? saldos.length) - 1);
+    if (event.key === "Home") siguiente = 0;
+    if (event.key === "End") siguiente = saldos.length - 1;
+
+    if (siguiente !== null) {
+      event.preventDefault();
+      seleccionarDia(siguiente);
+    }
+  };
+
+  // El tooltip muestra todos los vencimientos del período al recorrer cualquier día de la banda.
+  const opcionesFinales: ChartOptions<"line"> = {
+    ...base,
+    plugins: {
+      ...base.plugins,
+      tooltip: {
+        ...base.plugins?.tooltip,
+        callbacks: {
+          ...(base.plugins?.tooltip?.callbacks ?? {}),
+          afterBody: (items) => {
+            const dia = items[0]?.dataIndex;
+            if (dia === undefined) return [];
+            const banda = bandas.find((b) => dia >= b.desde && dia <= b.hasta);
+            const lista = banda
+              ? banda.impuestos.filter((i) => i.dia === dia)
+              : impuestos.filter((i) => i.dia === dia);
+            if (lista.length === 0) return [];
+            const lineas = lista.map((i) => `${i.concepto} · ${fechaCorta(i.fecha)} · ${fmtMonto(i.monto, i.moneda)}`);
+            return banda ? ["Período de caja sensible:", ...lineas] : lineas;
+          },
+        },
+      },
+    },
+  };
+
   return (
-    <div className="relative h-64 sm:h-80" role="img" aria-label="Gráfico del saldo proyectado a 90 días">
+    <div
+      className="relative h-64 sm:h-80"
+      role="group"
+      aria-label="Gráfico del saldo proyectado a 90 días. Usá las flechas izquierda y derecha para recorrer los días y Escape para quitar la selección."
+      tabIndex={0}
+      onKeyDown={manejarTeclado}
+    >
       <Line
+        ref={chartRef}
         data={{
           labels: etiquetas(hoy, saldos.length),
           datasets: [
@@ -60,7 +285,8 @@ export function GraficoProyeccion({ hoy, saldos }: { hoy: string; saldos: number
             },
           ],
         }}
-        options={opciones()}
+        options={opcionesFinales}
+        plugins={[crearPluginSeparadoresMensuales(hoy, saldos.length), ...(impuestos.length > 0 ? [crearPluginVencimientos(impuestos, saldos)] : [])]}
       />
     </div>
   );
@@ -99,7 +325,7 @@ export function GraficoEscenario({
             },
           ],
         }}
-        options={opciones((i) => i > 1)}
+        options={opciones((i) => i === 2 || i === 3)}
       />
     </div>
   );

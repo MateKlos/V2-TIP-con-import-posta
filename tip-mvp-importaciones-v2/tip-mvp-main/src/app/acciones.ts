@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import type { Resultado } from "@/lib/persistencia/tipos";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { supabaseConfigurado } from "@/lib/supabase/config";
 import { datosDeEjemplo } from "@/lib/tesoreria/demo";
 import { hoyISO } from "@/lib/tesoreria/fechas";
 import { MAX_FILAS } from "@/lib/tesoreria/importacion";
@@ -117,6 +118,7 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Escribí un email válido.", email };
   if (password.length < 6) return { error: "La contraseña tiene que tener al menos 6 caracteres.", email };
 
+  if (!supabaseConfigurado) return { error: "El ingreso y la creación de cuentas no están disponibles en este entorno." };
   const supabase = await crearClienteServidor();
   if (modo === "registro") {
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -131,7 +133,10 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
 }
 
 export async function cerrarSesion() {
-  const supabase = await crearClienteServidor();
-  await supabase.auth.signOut();
+  if (supabaseConfigurado) {
+    const supabase = await crearClienteServidor();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("No pudimos cerrar la sesión. Probá nuevamente.");
+  }
   redirect("/ingresar");
 }
