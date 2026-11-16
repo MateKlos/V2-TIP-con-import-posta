@@ -1,13 +1,9 @@
-import { redirect } from "next/navigation";
 import { Marca } from "@/components/Encabezado";
 import { FormularioIngreso } from "@/components/FormularioIngreso";
-import { supabaseConfigurado } from "@/lib/supabase/config";
-import { usuarioActual } from "@/lib/supabase/datos";
 
 export const metadata = { title: "Ingresar · TIP" };
 
 export default async function Ingresar() {
-  if (supabaseConfigurado && (await usuarioActual())) redirect("/panel");
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
       <div className="mb-6 flex justify-center">
