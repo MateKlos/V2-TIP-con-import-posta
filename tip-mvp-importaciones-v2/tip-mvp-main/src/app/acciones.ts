@@ -134,12 +134,9 @@ export async function ingresar(_: EstadoIngreso, form: FormData): Promise<Estado
 
 export async function cerrarSesion() {
   if (supabaseConfigurado) {
-    try {
-      const supabase = await crearClienteServidor();
-      await supabase.auth.signOut({ scope: "local" });
-    } catch {
-      // Aunque falle la revocación remota, no dejamos al usuario atrapado en el Panel.
-    }
+    const supabase = await crearClienteServidor();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("No pudimos cerrar la sesión. Probá nuevamente.");
   }
   redirect("/ingresar");
 }
