@@ -49,6 +49,13 @@ export function VistaEscenarios() {
   if (!datos || !analisis || !resultado) return <Cargando />;
   const { saldos, sim } = resultado;
   const p = sim.probabilidadFaltante;
+  const inicioBanda = sim.p10.findIndex((valor, indice) => Math.abs(valor - sim.p90[indice]) > 1);
+  const fechaInicioBanda = (() => {
+    if (inicioBanda < 0) return null;
+    const fecha = new Date(`${hoy}T12:00:00`);
+    fecha.setDate(fecha.getDate() + inicioBanda);
+    return new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", year: "numeric" }).format(fecha);
+  })();
   const t0 = primerDiaBajo(saldos);
   const color = p > 0.5 ? "text-rojo" : p > 0.2 ? "text-ambar" : "text-verde";
   const cambio = Math.min(...saldos) - Math.min(...analisis.saldos);
@@ -63,6 +70,11 @@ export function VistaEscenarios() {
           <span><i className="mr-1 inline-block h-0.5 w-4 bg-violeta-oscuro align-middle" />Escenario</span>
           <span><i className="mr-1 inline-block h-2.5 w-4 rounded-sm bg-violeta/15 align-middle" />80% de las 1.000 simulaciones</span>
         </div>
+        <p className="mt-2 text-xs leading-relaxed text-apagado">
+          {fechaInicioBanda
+            ? `El sombreado comienza el ${fechaInicioBanda}, cuando las simulaciones empiezan a mostrar diferencias en los saldos por la variación aleatoria del tipo de cambio y los posibles atrasos de cobro.`
+            : "En este escenario, las simulaciones no muestran una dispersión apreciable entre sus saldos."}
+        </p>
       </div>
 
       <div className="tarjeta">
