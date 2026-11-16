@@ -13,7 +13,7 @@ export default async function Ingresar() {
         <h1 className="titulo mb-1 text-xl">Tu tesorería, semanas antes</h1>
         <p className="mb-5 text-[13px] text-apagado">
           TIP proyecta tu caja de forma continua y te avisa con semanas de anticipación si te va a faltar o sobrar plata,
-          con recomendaciones concretas. Además, probá escenarios y mirá la probabilidad de quedarte sin caja.
+          con recomendaciones concretas.
         </p>
         <FormularioIngreso />
       </div>
