@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { cerrarSesion } from "@/app/acciones";
+import { supabaseConfigurado } from "@/lib/supabase/config";
 import { ListaAlertas } from "@/components/Alertas";
 import { useDatos } from "@/components/DatosProvider";
 import { GraficoProyeccion } from "@/components/Graficos";
@@ -34,7 +36,19 @@ export function VistaPanel() {
 
   return (
     <section>
-      <h1 className="titulo mb-3 text-xl">{datos.empresa.nombre}</h1>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="titulo text-xl">{datos.empresa.nombre}</h1>
+        {supabaseConfigurado && (
+          <form action={cerrarSesion}>
+            <button
+              className="rounded-xl bg-violeta px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violeta-oscuro"
+              type="submit"
+            >
+              Cerrar sesión
+            </button>
+          </form>
+        )}
+      </div>
 
       {sinMovimientos && (
         <div className="tarjeta mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-testid="vacio">
