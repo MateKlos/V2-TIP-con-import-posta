@@ -25,6 +25,45 @@ const APAGADO = "#7A7398";
 const AMBAR = "#D97706";
 
 const etiquetas = (hoy: string, n: number) => Array.from({ length: n }, (_, t) => fechaCorta(sumarDias(hoy, t)));
+function crearPluginSeparadoresMensuales(hoy: string, cantidadDias: number): Plugin<"line"> {
+  const fechas = Array.from({ length: cantidadDias }, (_, indice) => {
+    const fecha = new Date(`${hoy}T12:00:00`);
+    fecha.setDate(fecha.getDate() + indice);
+    return fecha;
+  });
+  const meses = fechas
+    .map((fecha, indice) => ({ fecha, indice }))
+    .filter(({ fecha, indice }) => indice === 0 || fecha.getMonth() !== fechas[indice - 1].getMonth() || fecha.getFullYear() !== fechas[indice - 1].getFullYear());
+
+  return {
+    id: "separadores-mensuales",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      ctx.save();
+      ctx.font = "600 10px sans-serif";
+      ctx.textBaseline = "middle";
+      meses.forEach(({ fecha, indice }) => {
+        const px = scales.x.getPixelForValue(indice);
+        ctx.strokeStyle = "#E4DFEF";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(px, chartArea.top);
+        ctx.lineTo(px, chartArea.bottom);
+        ctx.stroke();
+        const nombreMes = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(fecha);
+        const etiqueta = nombreMes.charAt(0).toLocaleUpperCase("es-AR") + nombreMes.slice(1);
+        const ancho = ctx.measureText(etiqueta).width;
+        const xEtiqueta = Math.min(px + 4, chartArea.right - ancho - 2);
+        ctx.fillStyle = APAGADO;
+        ctx.fillText(etiqueta, Math.max(chartArea.left + 2, xEtiqueta), chartArea.top - 12);
+      });
+      ctx.restore();
+    },
+  };
+}
+
 
 function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line"> {
   return {
@@ -39,6 +78,7 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
         callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(Number(c.raw ?? 0))}` },
       },
     },
+    layout: { padding: { top: 22 } },
     scales: {
       x: { ticks: { maxTicksLimit: 8, color: APAGADO, maxRotation: 0 }, grid: { display: false } },
       y: { ticks: { color: APAGADO, callback: (v) => fmtMillones(Number(v)), maxTicksLimit: 6 }, grid: { color: "#ECE8F6" } },
@@ -93,16 +133,12 @@ function crearPluginVencimientos(
         ctx.fillText(etiqueta, cajaX + 6, cajaY + 8.5);
       });
 
-      // Los extremos de cada período llevan las líneas punteadas.
-      // Los impuestos aislados conservan su propia línea.
+      // Solo se puntean los extremos de períodos con dos o más vencimientos.
+      // Un impuesto aislado no genera sombreado ni línea punteada.
       const diasMarcados = new Set<number>();
       for (const banda of bandas) {
         diasMarcados.add(banda.desde);
         diasMarcados.add(banda.hasta);
-      }
-      for (const imp of impuestos) {
-        const perteneceABanda = bandas.some((b) => b.impuestos.includes(imp));
-        if (!perteneceABanda) diasMarcados.add(imp.dia);
       }
 
       ctx.strokeStyle = AMBAR;
@@ -250,7 +286,7 @@ export function GraficoProyeccion({
           ],
         }}
         options={opcionesFinales}
-        plugins={impuestos.length > 0 ? [crearPluginVencimientos(impuestos, saldos)] : []}
+        plugins={[crearPluginSeparadoresMensuales(hoy, saldos.length), ...(impuestos.length > 0 ? [crearPluginVencimientos(impuestos, saldos)] : [])]}
       />
     </div>
   );

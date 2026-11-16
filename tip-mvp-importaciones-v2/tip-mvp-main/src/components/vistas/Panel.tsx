@@ -68,7 +68,6 @@ export function VistaPanel() {
             <p className="mt-2 flex items-center gap-1.5 text-xs text-apagado">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#D97706" }} />
               La banda marca el período sensible. Los extremos están punteados; al recorrer un vencimiento intermedio aparece su detalle.
-              Enfocá el gráfico y usá ←/→ para recorrer los días; Esc limpia la selección.
             </p>
           )}
           <p className="mt-2 text-xs text-apagado">
