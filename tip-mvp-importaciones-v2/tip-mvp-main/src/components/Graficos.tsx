@@ -52,12 +52,6 @@ function crearPluginSeparadoresMensuales(hoy: string, cantidadDias: number): Plu
         ctx.moveTo(px, chartArea.top);
         ctx.lineTo(px, chartArea.bottom);
         ctx.stroke();
-        const nombreMes = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(fecha);
-        const etiqueta = nombreMes.charAt(0).toLocaleUpperCase("es-AR") + nombreMes.slice(1);
-        const ancho = ctx.measureText(etiqueta).width;
-        const xEtiqueta = Math.min(px + 4, chartArea.right - ancho - 2);
-        ctx.fillStyle = APAGADO;
-        ctx.fillText(etiqueta, Math.max(chartArea.left + 2, xEtiqueta), chartArea.top - 12);
       });
       ctx.restore();
     },
@@ -78,7 +72,7 @@ function opciones(filtrarTooltip?: (i: number) => boolean): ChartOptions<"line">
         callbacks: { label: (c) => `${c.dataset.label}: ${fmtARS(Number(c.raw ?? 0))}` },
       },
     },
-    layout: { padding: { top: 22 } },
+    layout: { padding: { top: 8 } },
     scales: {
       x: { ticks: { maxTicksLimit: 8, color: APAGADO, maxRotation: 0 }, grid: { display: false } },
       y: { ticks: { color: APAGADO, callback: (v) => fmtMillones(Number(v)), maxTicksLimit: 6 }, grid: { color: "#ECE8F6" } },
@@ -124,7 +118,7 @@ function crearPluginVencimientos(
         ctx.font = "600 10px sans-serif";
         const anchoTexto = ctx.measureText(etiqueta).width;
         const cajaAncho = anchoTexto + 12;
-        const cajaX = Math.max(chartArea.left + 2, Math.min(izquierda + 3, chartArea.right - cajaAncho - 2));
+        const cajaX = Math.max(chartArea.left + 2, Math.min(izquierda + 18, chartArea.right - cajaAncho - 2));
         const cajaY = chartArea.top + 5 + indice * 21;
         ctx.fillStyle = "rgba(255, 250, 240, 0.94)";
         ctx.fillRect(cajaX, cajaY, cajaAncho, 17);
