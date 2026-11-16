@@ -331,6 +331,17 @@ export function VistaImportaciones() {
       </div>
 
       <PreguntasFrecuentes />
+
+      <div className="text-center text-xs text-apagado">
+        ¿Necesitás una referencia?{" "}
+        <a
+          href="/guias/guia-general-importacion-argentina.pdf"
+          download
+          className="font-medium text-violeta underline underline-offset-2 hover:text-violeta-oscuro"
+        >
+          Descargar guía general de importación (PDF)
+        </a>
+      </div>
     </section>
   );
 }
